@@ -1,5 +1,6 @@
 package calendar;
 
+import calendar.Day.Flag;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
@@ -109,7 +110,8 @@ public class Calendar extends Application {
         borderPane.setCenter(new WeekView());
     }
     private void dayClick(){
-        borderPane.setCenter(new Label("Day"));
+        Date date = new Date();
+        borderPane.setCenter(new Day(date, Flag.DAILY));
     }
     
     private Canvas addDivider(int w){

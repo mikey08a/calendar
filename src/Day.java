@@ -21,6 +21,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.VBox;
@@ -76,16 +77,12 @@ import javafx.scene.text.Text;
 
 public class Day extends StackPane{
     
-    public static int FLAG_COMPACT=0;
-    public static int FLAG_EXPANDED=1;
-    public static int FLAG_LIST=2;
-    public static int FLAG_DAILY=3;
-    public static int FLAG_FOCUSED=4;
-    public static int FLAG_NOFOCUS=5;
-    public static int FLAG_CURR=6;
-    private static int state;
+    public enum Flag {COMPACT,EXPANDED,LIST,DAILY,FOCUSED,NOFOCUS,CURR}
+    
+    private final static int SPACING = 15;
+    
     private double width;
-    private ArrayList flags;
+    private final ArrayList flags;
     private Date date;
     private StackPane main;
     private MonthView root;
@@ -99,57 +96,44 @@ public class Day extends StackPane{
         init(date);
     }
     public Day(Date date,double width){
-        flags = new ArrayList();
         this.width = width;
+        flags = new ArrayList();
         init(date);
     }
-    public Day(Date date,double width,int flag){
+    public Day(Date date,double width,Flag... flagArr){
         flags = new ArrayList();
+        flags.addAll(Arrays.asList(flagArr));
         //System.out.println(width);
         this.width = width;
-        flags.add(flag);
         init(date);
     }
-    public Day(Date date,double width,int flag,int flag1){
+    public Day(Date date,Flag... flagArr){
         flags = new ArrayList();
-        this.width = width;
-        flags.add(flag);
-        flags.add(flag1);
-        init(date);
-    }
-    public Day(Date date,int flag){
-        flags = new ArrayList();
-        flags.add(flag);
-        init(date);
-    }
-    public Day(Date date,int flag,int flag1){
-        flags = new ArrayList();
-        flags.add(flag);
-        flags.add(flag1);
+        flags.addAll(Arrays.asList(flagArr));
         init(date);
     }
     
     private void init(Date date){
         
-        if(!(flags.contains(FLAG_COMPACT)||
-                flags.contains(FLAG_EXPANDED)||
-                flags.contains(FLAG_LIST))){
-            flags.add(FLAG_COMPACT);
+        if(!(flags.contains(Flag.COMPACT)||
+                flags.contains(Flag.DAILY)||
+                flags.contains(Flag.LIST))){
+            flags.add(Flag.COMPACT);
         }
-        if(flags.contains(FLAG_CURR)){
+        if(flags.contains(Flag.CURR)){
             setStyle("-fx-background-color: lightblue");
         }
-        
+
         cal = Calendar.getInstance();
         cal.setTime(date);
         
         //loadAppts();
         
-        if(flags.contains(FLAG_COMPACT)){
+        if(flags.contains(Flag.COMPACT)){
             startCompact(date);
-        }else if(flags.contains(FLAG_LIST)){
+        }else if(flags.contains(Flag.LIST)){
             startList(date);
-        }else if(flags.contains(FLAG_DAILY)){
+        }else if(flags.contains(Flag.DAILY)){
             startDay(date);
         }
     }
@@ -287,14 +271,19 @@ public class Day extends StackPane{
                 break;
         }
         String s;
-        if(cal.get(Calendar.DAY_OF_MONTH)==1){
-            s = "st";
-        }else if(cal.get(Calendar.DAY_OF_MONTH)==2){
-            s = "nd";
-        }else if(cal.get(Calendar.DAY_OF_MONTH)==3){
-            s = "rd";
-        }else{
-            s = "th";
+        switch (cal.get(Calendar.DAY_OF_MONTH)) {
+            case 1:
+                s = "st";
+                break;
+            case 2:
+                s = "nd";
+                break;
+            case 3:
+                s = "rd";
+                break;
+            default:
+                s = "th";
+                break;
         }
         String full = String.format("%s, %s %d%s, %d", dayOfWeek,month,
                 cal.get(Calendar.DAY_OF_MONTH),s,cal.get(Calendar.YEAR));
@@ -302,13 +291,12 @@ public class Day extends StackPane{
     }
 
     private void clicked() {
-        //System.out.println("clicked");
         root = (MonthView) getParent().getParent().getParent().getParent();
         GridPane calHolder = (GridPane) getScene().lookup("#calHolder");
         if(!root.getDragged()){
-            if(flags.contains(FLAG_COMPACT)){
-            flags.remove(FLAG_COMPACT);
-            flags.add(FLAG_EXPANDED);
+            if(flags.contains(Flag.COMPACT)){
+            flags.remove(Flag.COMPACT);
+            flags.add(Flag.EXPANDED);
             expand();
             }
         }
@@ -321,7 +309,7 @@ public class Day extends StackPane{
     private void startCompact(Date date) {
         setAlignment(Pos.TOP_CENTER);
         Label day = new Label(Integer.toString(cal.get(Calendar.DAY_OF_MONTH)));
-        if(flags.contains(FLAG_NOFOCUS)){
+        if(flags.contains(Flag.NOFOCUS)){
             day.setTextFill(Color.GRAY);
         }
         day.setFont(new Font(24));
@@ -331,64 +319,29 @@ public class Day extends StackPane{
     }
 
     private void startList(Date date) {
-        GridPane base = new GridPane();
-        RowConstraints rc = new RowConstraints();
-        rc.setMinHeight(WeekView.rowHeight);
-        rc.setMaxHeight(WeekView.rowHeight);
-        ColumnConstraints cc = new ColumnConstraints();
-        //cc.setPrefWidth();
-        cc.setFillWidth(true);
-        base.getColumnConstraints().add(cc);
-        //base.setGridLinesVisible(true);
-        for(int i=0,min=0,hr=0;i<288;i++,min+=5){
-            if(min==60){
-                hr++;
-                min=0;
-            }
-            if(i%3==0){
-                //base.add(new Label(hr+" "+min),0,i,1,3);
-            }
-            base.getRowConstraints().add(rc);
-            try{
-                data.first();
-                for(data.previous();data.next();){
-                    System.out.println(hr);
-                    if(data.getInt("StartHr")==hr){
-                        System.out.println("Almost");
-                        if(data.getInt("StartMin")==min){
-                            Pane event = new Pane();
-                            event.setMinWidth(100);
-                            event.setStyle("-fx-background-color: GREEN");
-                            base.add(event,0,i);
-                            System.out.println("DONE");
-                        }
-                    }
-                }
-            }catch(Exception e){System.out.println(e);}
-            /*switch(i%4){
-                case(0):
-                    container.setBackground(new Background(new BackgroundFill(
-                        Color.WHITE,null,null)));
-                break;
-                case(2):
-                container.setBackground(new Background(new BackgroundFill(
-                    Color.GREY,null,null)));
-                break;
-                case(1):
-                default:
-                container.setBackground(new Background(new BackgroundFill(
-                    Color.LIGHTGREY,null,null)));
-                break;
-            }*/
-            
-        }
-        base.add(new Label("h"),0,0);
-        getChildren().add(base);
         
     }
     
     private void startDay(Date date){
-        
+        setPadding(new Insets(10,10,10,10));
+        Text fullDate = new Text(getFullDate());
+        Label day = new Label(fullDate.getText());
+        day.setFont(new Font(26));
+        ImageView underline = new ImageView(new Image(getClass()
+                .getResourceAsStream("gray_circle.png")));
+        underline.setFitHeight(3);
+        underline.setFitWidth(fullDate.getLayoutBounds().getWidth());
+        day.setGraphic(underline);
+        day.setContentDisplay(ContentDisplay.BOTTOM);
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        VBox cont = new VBox();
+        cont.setAlignment(Pos.TOP_CENTER);
+        cont.setSpacing(SPACING);
+        cont.getChildren().addAll(day,scrollPane);
+        System.out.println(cal.get(Calendar.MONTH));
+        getChildren().addAll(cont);
     }
     
     private void connect(){
@@ -462,7 +415,7 @@ public class Day extends StackPane{
         return new int[] {start,end};
     }
     
-    public Object getAppts(int time){
-        return appts.get(time);
+    public String getAppts(int time){
+        return (String) appts.get(time);
     }
 }

@@ -1,5 +1,6 @@
 package calendar;
 
+import calendar.Day.Flag;
 import com.sun.javafx.geom.BaseBounds;
 import com.sun.javafx.geom.transform.BaseTransform;
 import com.sun.javafx.jmx.MXNodeAlgorithm;
@@ -139,7 +140,7 @@ public class MonthView extends StackPane{
             Date date = new GregorianCalendar(year, month-1
                     , cal.getActualMaximum(Calendar.DAY_OF_MONTH)-i)
                     .getTime();
-            grid.add(new Day(date,Day.FLAG_NOFOCUS),d,row);
+            grid.add(new Day(date,Flag.NOFOCUS),d,row);
         }
         //Finish the first row after the previous month
         for(int i = offset;i<7;i++){
@@ -149,7 +150,7 @@ public class MonthView extends StackPane{
             } else {
                 Date date = new GregorianCalendar(year, month, count).getTime();
                 if(cal.get(Calendar.DAY_OF_MONTH)==count){
-                    grid.add(new Day(date,Day.FLAG_CURR),i,row);
+                    grid.add(new Day(date,Flag.CURR),i,row);
                 }else{
                     grid.add(new Day(date), i, row);
                 }
@@ -165,12 +166,12 @@ public class MonthView extends StackPane{
                     Date date = new GregorianCalendar(year, month+1, 
                             count-end)
                             .getTime();
-                    grid.add(new Day(date,Day.FLAG_NOFOCUS), i, row);
+                    grid.add(new Day(date,Flag.NOFOCUS), i, row);
                 }else{
                     Date date = new GregorianCalendar(year, month
                     , count).getTime();
                     if(cal.get(Calendar.DAY_OF_MONTH)==count){
-                        grid.add(new Day(date,Day.FLAG_CURR),i,row);
+                        grid.add(new Day(date,Flag.CURR),i,row);
                     }else{
                         grid.add(new Day(date), i, row);
                     }
